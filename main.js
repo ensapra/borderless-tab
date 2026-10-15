@@ -265,14 +265,16 @@ var BorderlessTabSettingTab = class extends import_obsidian.PluginSettingTab {
   getSettingDefinitions() {
     return [
       {
-        name: "Borderless behavior",
+        type: "group",
+        heading: "Borderless behavior",
         items: [
           this.toggleDefinition("Reveal headers on hover", "Show hidden headers when the pointer reaches the top of the tab group.", "revealOnHover"),
           this.toggleDefinition("Animate header transitions", "Animate headers when they hide and reveal.", "animate", () => !this.plugin.settings.revealOnHover)
         ]
       },
       {
-        name: "Hidden in borderless mode",
+        type: "group",
+        heading: "Hidden in borderless mode",
         items: [
           this.toggleDefinition("Tab header", "Hide the workspace tab strip.", "hideTabHeader"),
           this.toggleDefinition("View header", "Hide the note title and back/forward controls.", "hideViewHeader"),
@@ -280,7 +282,8 @@ var BorderlessTabSettingTab = class extends import_obsidian.PluginSettingTab {
         ]
       },
       {
-        name: "Automatic borderless files",
+        type: "group",
+        heading: "Automatic borderless files",
         items: [
           this.toggleDefinition("PDF files", "Automatically make PDF views borderless.", "autoPdf"),
           this.toggleDefinition("Web views", "Automatically make web views and browser views borderless.", "autoWebview"),
@@ -304,40 +307,5 @@ var BorderlessTabSettingTab = class extends import_obsidian.PluginSettingTab {
       desc,
       control: { type: "toggle", key, defaultValue: DEFAULT_SETTINGS[key], disabled }
     };
-  }
-  display() {
-    const { containerEl } = this;
-    containerEl.empty();
-    new import_obsidian.Setting(containerEl).setName("Borderless behavior").setHeading();
-    new import_obsidian.Setting(containerEl).setName("Reveal headers on hover").setDesc("Show hidden headers when the pointer reaches the top of the tab group.").addToggle((toggle) => toggle.setValue(this.plugin.settings.revealOnHover).onChange(async (value) => {
-      animateToggle == null ? void 0 : animateToggle.setDisabled(!value);
-      await this.plugin.updateSettings({ revealOnHover: value });
-    }));
-    let animateToggle;
-    new import_obsidian.Setting(containerEl).setName("Animate header transitions").setDesc("Animate headers when they hide and reveal.").addToggle((toggle) => {
-      animateToggle = toggle;
-      toggle.setDisabled(!this.plugin.settings.revealOnHover).setValue(this.plugin.settings.animate).onChange(async (value) => {
-        await this.plugin.updateSettings({ animate: value });
-      });
-    });
-    new import_obsidian.Setting(containerEl).setName("Hidden in borderless mode").setHeading();
-    this.addVisibilitySetting(containerEl, "Tab header", "Hide the workspace tab strip.", "hideTabHeader");
-    this.addVisibilitySetting(containerEl, "View header", "Hide the note title and back/forward controls.", "hideViewHeader");
-    this.addVisibilitySetting(containerEl, "PDF toolbar", "Hide the toolbar in Obsidian\u2019s built-in PDF viewer.", "hidePdfToolbar");
-    new import_obsidian.Setting(containerEl).setName("Automatic borderless files").setHeading();
-    this.addAutomaticSetting(containerEl, "PDF files", "Automatically make PDF views borderless.", "autoPdf");
-    this.addAutomaticSetting(containerEl, "Web views", "Automatically make web views and browser views borderless.", "autoWebview");
-    this.addAutomaticSetting(containerEl, "Markdown files", "Automatically make Markdown notes borderless.", "autoMarkdown");
-    this.addAutomaticSetting(containerEl, "Other views", "Automatically make all other view types borderless.", "autoOther");
-  }
-  addVisibilitySetting(containerEl, name, description, key) {
-    new import_obsidian.Setting(containerEl).setName(name).setDesc(description).addToggle((toggle) => toggle.setValue(this.plugin.settings[key]).onChange(async (value) => {
-      await this.plugin.updateSettings({ [key]: value });
-    }));
-  }
-  addAutomaticSetting(containerEl, name, description, key) {
-    new import_obsidian.Setting(containerEl).setName(name).setDesc(description).addToggle((toggle) => toggle.setValue(this.plugin.settings[key]).onChange(async (value) => {
-      await this.plugin.updateSettings({ [key]: value });
-    }));
   }
 };
