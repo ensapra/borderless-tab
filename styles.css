@@ -1,0 +1,36 @@
+.borderless-tab-toggle {
+	align-items: center;
+	background: transparent;
+	border: 0;
+	border-radius: var(--radius-s);
+	color: var(--tab-text-color);
+	cursor: pointer;
+	display: inline-flex;
+	height: 22px;
+	justify-content: center;
+	margin-inline-start: 2px;
+	padding: 2px;
+	width: 22px;
+}
+
+.borderless-tab-toggle:hover,
+.borderless-tab-toggle.is-enabled {
+	background: var(--background-modifier-hover);
+	color: var(--text-accent);
+}
+
+.borderless-tab-toggle svg {
+	height: 14px;
+	width: 14px;
+}
+
+.borderless-tab-enabled,
+.borderless-tab-enabled > *,
+.borderless-tab-enabled .view-content,
+.borderless-tab-enabled .markdown-source-view,
+.borderless-tab-enabled .markdown-preview-view,
+.borderless-tab-enabled .cm-editor {
+	border: none !important;
+	box-shadow: none !important;
+	outline: none !important;
+}

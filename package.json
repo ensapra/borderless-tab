@@ -1,0 +1,17 @@
+{
+  "name": "borderless-tab",
+  "version": "1.0.0",
+  "description": "Toggle a fully borderless presentation for individual Obsidian tabs.",
+  "main": "main.js",
+  "scripts": {
+    "build": "esbuild main.ts --bundle --external:obsidian --format=cjs --platform=node --target=es2018 --outfile=main.js",
+    "dev": "esbuild main.ts --bundle --external:obsidian --format=cjs --platform=node --target=es2018 --outfile=main.js --watch"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "esbuild": "^0.24.0",
+    "obsidian": "^1.7.2",
+    "tslib": "^2.8.1",
+    "typescript": "^5.6.0"
+  }
+}
