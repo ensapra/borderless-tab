@@ -24,14 +24,24 @@ __export(main_exports, {
 module.exports = __toCommonJS(main_exports);
 var import_obsidian = require("obsidian");
 var BORDERLESS_CLASS = "borderless-tab-enabled";
+var DEFAULT_SETTINGS = {
+  animate: true,
+  revealOnHover: true,
+  hideTabHeader: true,
+  hideViewHeader: true,
+  hidePdfToolbar: false
+};
 var BorderlessTabPlugin = class extends import_obsidian.Plugin {
   constructor() {
     super(...arguments);
+    this.settings = { ...DEFAULT_SETTINGS };
     this.borderlessLeaves = /* @__PURE__ */ new WeakSet();
     this.revealZones = /* @__PURE__ */ new WeakSet();
     this.revealTimers = /* @__PURE__ */ new WeakMap();
   }
-  onload() {
+  async onload() {
+    await this.loadSettings();
+    this.addSettingTab(new BorderlessTabSettingTab(this.app, this));
     this.patchPaneMenu();
     this.registerEvent(this.app.workspace.on("layout-change", () => this.restoreBorderlessClasses()));
     this.registerEvent(this.app.workspace.on("editor-menu", (menu, _editor, view) => {
@@ -50,6 +60,16 @@ var BorderlessTabPlugin = class extends import_obsidian.Plugin {
   }
   onunload() {
     this.app.workspace.iterateAllLeaves((leaf) => this.setLeafBorderless(leaf, false));
+  }
+  async loadSettings() {
+    this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+  }
+  async updateSettings(changes) {
+    Object.assign(this.settings, changes);
+    await this.saveData(this.settings);
+    this.app.workspace.iterateAllLeaves((leaf) => {
+      if (this.borderlessLeaves.has(leaf)) this.setLeafBorderless(leaf, true);
+    });
   }
   patchPaneMenu() {
     const originalOnPaneMenu = import_obsidian.View.prototype.onPaneMenu;
@@ -92,9 +112,23 @@ var BorderlessTabPlugin = class extends import_obsidian.Plugin {
     leafElement == null ? void 0 : leafElement.classList.toggle(BORDERLESS_CLASS, enabled);
     if (tabs) {
       tabs.classList.toggle(BORDERLESS_CLASS, enabled);
+      this.applySettingsClasses(tabs, enabled);
       this.ensureRevealZone(tabs);
       if (!enabled) this.setHeadersRevealed(tabs, false);
     }
+  }
+  applySettingsClasses(tabs, enabled) {
+    const classes = {
+      "borderless-tab-animated": this.settings.animate && this.settings.revealOnHover,
+      "borderless-tab-hover-reveal": this.settings.revealOnHover,
+      "borderless-tab-hide-tab-header": this.settings.hideTabHeader,
+      "borderless-tab-hide-view-header": this.settings.hideViewHeader,
+      "borderless-tab-hide-pdf-toolbar": this.settings.hidePdfToolbar
+    };
+    for (const [className, settingEnabled] of Object.entries(classes)) {
+      tabs.classList.toggle(className, enabled && settingEnabled);
+    }
+    if (!enabled || !this.settings.revealOnHover) this.setHeadersRevealed(tabs, false);
   }
   ensureRevealZone(tabs) {
     if (this.revealZones.has(tabs)) return;
@@ -103,9 +137,12 @@ var BorderlessTabPlugin = class extends import_obsidian.Plugin {
     revealZone.className = "borderless-tab-reveal-zone";
     tabs.appendChild(revealZone);
     this.registerDomEvent(revealZone, "mouseenter", () => {
-      this.setHeadersRevealed(tabs, true);
+      if (this.settings.revealOnHover && tabs.classList.contains("borderless-tab-hover-reveal")) {
+        this.setHeadersRevealed(tabs, true);
+      }
     });
     this.registerDomEvent(revealZone, "mouseleave", () => {
+      if (!this.settings.revealOnHover || !tabs.classList.contains("borderless-tab-hover-reveal")) return;
       const timer = window.setTimeout(() => {
         this.revealTimers.delete(tabs);
         this.setHeadersRevealed(tabs, false);
@@ -113,7 +150,7 @@ var BorderlessTabPlugin = class extends import_obsidian.Plugin {
       this.revealTimers.set(tabs, timer);
     });
     this.registerDomEvent(tabs, "mousemove", (event) => {
-      if (!tabs.classList.contains(BORDERLESS_CLASS)) return;
+      if (!this.settings.revealOnHover || !tabs.classList.contains(BORDERLESS_CLASS) || !tabs.classList.contains("borderless-tab-hover-reveal")) return;
       const rect = tabs.getBoundingClientRect();
       const pointerIsAtTop = event.clientY - rect.top <= 18;
       const target = event.target;
@@ -122,7 +159,7 @@ var BorderlessTabPlugin = class extends import_obsidian.Plugin {
       ) !== null;
       if (pointerIsAtTop || pointerIsOverHeader) {
         this.setHeadersRevealed(tabs, true);
-      } else if (this.revealTimers.has(tabs) === false) {
+      } else if (!this.revealTimers.has(tabs)) {
         const timer = window.setTimeout(() => {
           this.revealTimers.delete(tabs);
           this.setHeadersRevealed(tabs, false);
@@ -132,6 +169,7 @@ var BorderlessTabPlugin = class extends import_obsidian.Plugin {
     });
   }
   setHeadersRevealed(tabs, revealed) {
+    if (revealed && !this.settings.revealOnHover) revealed = false;
     const timer = this.revealTimers.get(tabs);
     if (timer !== void 0) {
       window.clearTimeout(timer);
@@ -146,5 +184,36 @@ var BorderlessTabPlugin = class extends import_obsidian.Plugin {
       current = current.parentElement;
     }
     return null;
+  }
+};
+var BorderlessTabSettingTab = class extends import_obsidian.PluginSettingTab {
+  constructor(app, plugin) {
+    super(app, plugin);
+    this.plugin = plugin;
+  }
+  display() {
+    const { containerEl } = this;
+    containerEl.empty();
+    new import_obsidian.Setting(containerEl).setName("Borderless behavior").setHeading();
+    new import_obsidian.Setting(containerEl).setName("Reveal headers on hover").setDesc("Show hidden headers when the pointer reaches the top of the tab group.").addToggle((toggle) => toggle.setValue(this.plugin.settings.revealOnHover).onChange(async (value) => {
+      animateToggle == null ? void 0 : animateToggle.setDisabled(!value);
+      await this.plugin.updateSettings({ revealOnHover: value });
+    }));
+    let animateToggle;
+    new import_obsidian.Setting(containerEl).setName("Animate header transitions").setDesc("Animate headers when they hide and reveal.").addToggle((toggle) => {
+      animateToggle = toggle;
+      toggle.setDisabled(!this.plugin.settings.revealOnHover).setValue(this.plugin.settings.animate).onChange(async (value) => {
+        await this.plugin.updateSettings({ animate: value });
+      });
+    });
+    new import_obsidian.Setting(containerEl).setName("Hidden in borderless mode").setHeading();
+    this.addVisibilitySetting(containerEl, "Tab header", "Hide the workspace tab strip.", "hideTabHeader");
+    this.addVisibilitySetting(containerEl, "View header", "Hide the note title and back/forward controls.", "hideViewHeader");
+    this.addVisibilitySetting(containerEl, "PDF toolbar", "Hide the toolbar in Obsidian\u2019s built-in PDF viewer.", "hidePdfToolbar");
+  }
+  addVisibilitySetting(containerEl, name, description, key) {
+    new import_obsidian.Setting(containerEl).setName(name).setDesc(description).addToggle((toggle) => toggle.setValue(this.plugin.settings[key]).onChange(async (value) => {
+      await this.plugin.updateSettings({ [key]: value });
+    }));
   }
 };

@@ -11,9 +11,13 @@
 	outline: none !important;
 }
 
-/* Collapse the tab strip and view header while keeping the document toolbar. */
-.workspace-tabs.borderless-tab-enabled .workspace-tab-header-container,
-.borderless-tab-enabled .view-header {
+.workspace-tabs.borderless-tab-enabled {
+	position: relative;
+}
+
+/* Collapse only the headers selected in the plugin settings. */
+.workspace-tabs.borderless-tab-enabled.borderless-tab-hide-tab-header .workspace-tab-header-container,
+.workspace-tabs.borderless-tab-enabled.borderless-tab-hide-view-header .view-header {
 	display: flex !important;
 	height: auto !important;
 	max-height: 0 !important;
@@ -22,22 +26,28 @@
 	overflow: hidden !important;
 	pointer-events: none;
 	transform: translateY(-12px);
+}
+
+/* Animation is optional. */
+.workspace-tabs.borderless-tab-enabled.borderless-tab-animated.borderless-tab-hide-tab-header .workspace-tab-header-container,
+.workspace-tabs.borderless-tab-enabled.borderless-tab-animated.borderless-tab-hide-view-header .view-header {
 	transition: max-height 180ms ease, opacity 140ms ease, transform 180ms ease;
 }
 
-.workspace-tabs.borderless-tab-enabled.borderless-tab-revealed .workspace-tab-header-container,
-.workspace-tabs.borderless-tab-enabled.borderless-tab-revealed .view-header {
+/* Reveal only the headers selected to be hidden. */
+.workspace-tabs.borderless-tab-enabled.borderless-tab-hover-reveal.borderless-tab-revealed.borderless-tab-hide-tab-header .workspace-tab-header-container,
+.workspace-tabs.borderless-tab-enabled.borderless-tab-hover-reveal.borderless-tab-revealed.borderless-tab-hide-view-header .view-header {
 	max-height: 96px !important;
 	opacity: 1;
 	pointer-events: auto;
 	transform: translateY(0);
 }
 
-.workspace-tabs.borderless-tab-enabled {
-	position: relative;
+.workspace-tabs.borderless-tab-enabled.borderless-tab-hide-pdf-toolbar .pdf-toolbar {
+	display: none !important;
 }
 
-.workspace-tabs.borderless-tab-enabled .borderless-tab-reveal-zone {
+.workspace-tabs.borderless-tab-enabled.borderless-tab-hover-reveal .borderless-tab-reveal-zone {
 	display: block;
 	height: 16px;
 	left: 0;
@@ -48,7 +58,8 @@
 	z-index: 1000;
 }
 
-.workspace-tabs:not(.borderless-tab-enabled) .borderless-tab-reveal-zone {
+.workspace-tabs:not(.borderless-tab-enabled) .borderless-tab-reveal-zone,
+.workspace-tabs.borderless-tab-enabled:not(.borderless-tab-hover-reveal) .borderless-tab-reveal-zone {
 	display: none;
 }
 
@@ -60,8 +71,8 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-	.workspace-tabs.borderless-tab-enabled .workspace-tab-header-container,
-	.borderless-tab-enabled .view-header {
+	.workspace-tabs.borderless-tab-enabled.borderless-tab-animated.borderless-tab-hide-tab-header .workspace-tab-header-container,
+	.workspace-tabs.borderless-tab-enabled.borderless-tab-animated.borderless-tab-hide-view-header .view-header {
 		transition: none;
 	}
 }

@@ -10,6 +10,8 @@ An Obsidian plugin that adds a borderless toggle to every open tab.
 - Remove borders, outlines, and shadows from tab content.
 - Hide the tab strip and view header, including the note title and back/forward controls.
 - Reveal the hidden headers temporarily by moving the pointer to the top of the tab group.
+- Optionally hide the built-in PDF toolbar.
+- Configure animation, hover reveal, and hidden elements from the plugin settings.
 - Use the command palette with **Toggle borderless tab** as an alternative.
 
 ## Usage
