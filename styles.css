@@ -52,6 +52,25 @@
 	display: none !important;
 }
 
+/* Keep the PDF.js Ctrl+F find bar separate from the main PDF toolbar. */
+.workspace-tabs.borderless-tab-enabled .pdf-findbar,
+.workspace-tabs.borderless-tab-enabled .findbar,
+.workspace-tabs.borderless-tab-enabled #findbar {
+	display: none !important;
+	max-height: 0 !important;
+	opacity: 0 !important;
+	pointer-events: none !important;
+}
+
+.workspace-tabs.borderless-tab-enabled .pdf-findbar:focus-within,
+.workspace-tabs.borderless-tab-enabled .findbar:focus-within,
+.workspace-tabs.borderless-tab-enabled #findbar:focus-within {
+	display: flex !important;
+	max-height: 96px !important;
+	opacity: 1 !important;
+	pointer-events: auto !important;
+}
+
 .workspace-tabs.borderless-tab-enabled.borderless-tab-hover-reveal .borderless-tab-reveal-zone {
 	display: block;
 	height: 16px;
@@ -73,15 +92,6 @@
 .workspace-tabs.borderless-tab-enabled .workspace-leaf-content {
 	border: none !important;
 	box-shadow: none !important;
-}
-
-/* Never hide or disable the native window controls. */
-.titlebar-button-container,
-.titlebar-button-container .titlebar-button {
-	display: flex !important;
-	opacity: 1 !important;
-	pointer-events: auto !important;
-	visibility: visible !important;
 }
 
 @media (prefers-reduced-motion: reduce) {
