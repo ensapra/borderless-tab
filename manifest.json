@@ -1,7 +1,7 @@
 {
   "id": "borderless-tab",
   "name": "Borderless Tab",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "minAppVersion": "1.7.0",
   "description": "Add a per-tab toggle that removes borders from the tab content.",
   "author": "Sapra",
