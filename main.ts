@@ -116,16 +116,16 @@ export default class BorderlessTabPlugin extends Plugin {
 	private restoreBorderlessClasses(): void {
 		window.requestAnimationFrame(() => {
 			const workspaceTabs = new Set<HTMLElement>();
+			const borderlessTabs = new Set<HTMLElement>();
 			this.app.workspace.iterateAllLeaves((leaf) => {
 				const tabs = this.findTabs(leaf);
-				if (tabs) workspaceTabs.add(tabs);
+				if (!tabs) return;
+				workspaceTabs.add(tabs);
+				if (this.isLeafBorderless(leaf)) borderlessTabs.add(tabs);
 			});
 
 			workspaceTabs.forEach((tabs) => this.clearWorkspaceClasses(tabs));
-			const activeLeaf = this.app.workspace.activeLeaf;
-			if (activeLeaf && this.isLeafBorderless(activeLeaf)) {
-				this.applyWorkspaceState(activeLeaf);
-			}
+			borderlessTabs.forEach((tabs) => this.applyWorkspaceState(tabs));
 		});
 	}
 
@@ -143,10 +143,7 @@ export default class BorderlessTabPlugin extends Plugin {
 		this.restoreBorderlessClasses();
 	}
 
-	private applyWorkspaceState(leaf: WorkspaceLeaf): void {
-		const tabs = this.findTabs(leaf);
-		if (!tabs) return;
-
+	private applyWorkspaceState(tabs: HTMLElement): void {
 		tabs.classList.add(BORDERLESS_CLASS);
 		this.applySettingsClasses(tabs, true);
 		this.ensureRevealZone(tabs);
