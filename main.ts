@@ -54,7 +54,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 function isBorderlessSettingKey(key: string): key is keyof BorderlessSettings {
-	return BORDERLESS_SETTING_KEYS.includes(key as keyof BorderlessSettings);
+	return BORDERLESS_SETTING_KEYS.some((settingKey) => settingKey === key);
 }
 
 function readSettings(data: unknown): Partial<BorderlessSettings> {
@@ -115,11 +115,11 @@ export default class BorderlessTabPlugin extends Plugin {
 	}
 
 	private patchPaneMenu(): void {
-		const originalOnPaneMenu = View.prototype.onPaneMenu;
+		const originalOnPaneMenu = View.prototype.onPaneMenu.bind(View.prototype);
 		const addPaneMenuItem = this.addPaneMenuItem.bind(this);
 
 		View.prototype.onPaneMenu = function (this: View, menu: Menu, source: string): void {
-			originalOnPaneMenu.call(this, menu, source);
+			originalOnPaneMenu(menu, source);
 			if (source === "tab-header" || source === "more-options") {
 				addPaneMenuItem(menu, this.leaf);
 			}
@@ -234,7 +234,7 @@ export default class BorderlessTabPlugin extends Plugin {
 			"borderless-tab-hide-pdf-toolbar": this.settings.hidePdfToolbar
 		};
 
-		for (const [className, settingEnabled] of Object.entries(classes) as [string, boolean][]) {
+		for (const [className, settingEnabled] of Object.entries(classes)) {
 			tabs.classList.toggle(className, enabled && settingEnabled);
 		}
 		if (!enabled || !this.settings.revealOnHover) this.setHeadersRevealed(tabs, false);

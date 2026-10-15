@@ -50,7 +50,7 @@ function isRecord(value) {
   return typeof value === "object" && value !== null;
 }
 function isBorderlessSettingKey(key) {
-  return BORDERLESS_SETTING_KEYS.includes(key);
+  return BORDERLESS_SETTING_KEYS.some((settingKey) => settingKey === key);
 }
 function readSettings(data) {
   if (!isRecord(data)) return {};
@@ -105,10 +105,10 @@ var BorderlessTabPlugin = class extends import_obsidian.Plugin {
     this.restoreBorderlessClasses();
   }
   patchPaneMenu() {
-    const originalOnPaneMenu = import_obsidian.View.prototype.onPaneMenu;
+    const originalOnPaneMenu = import_obsidian.View.prototype.onPaneMenu.bind(import_obsidian.View.prototype);
     const addPaneMenuItem = this.addPaneMenuItem.bind(this);
     import_obsidian.View.prototype.onPaneMenu = function(menu, source) {
-      originalOnPaneMenu.call(this, menu, source);
+      originalOnPaneMenu(menu, source);
       if (source === "tab-header" || source === "more-options") {
         addPaneMenuItem(menu, this.leaf);
       }
