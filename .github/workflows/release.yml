@@ -29,6 +29,7 @@ jobs:
       - name: Build plugin
         run: |
           npm ci
+          chmod +x node_modules/esbuild/bin/esbuild node_modules/.bin/esbuild
           npm run build
       - name: Create release
         env:

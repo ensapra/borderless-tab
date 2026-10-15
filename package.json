@@ -4,8 +4,8 @@
   "description": "Toggle a fully borderless presentation for individual Obsidian tabs.",
   "main": "main.js",
   "scripts": {
-    "build": "node node_modules/esbuild/bin/esbuild main.ts --bundle --external:obsidian --format=cjs --platform=node --target=es2018 --outfile=main.js",
-    "dev": "node node_modules/esbuild/bin/esbuild main.ts --bundle --external:obsidian --format=cjs --platform=node --target=es2018 --outfile=main.js --watch"
+    "build": "esbuild main.ts --bundle --external:obsidian --format=cjs --platform=node --target=es2018 --outfile=main.js",
+    "dev": "esbuild main.ts --bundle --external:obsidian --format=cjs --platform=node --target=es2018 --outfile=main.js --watch"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
