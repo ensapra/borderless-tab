@@ -29,13 +29,18 @@ var DEFAULT_SETTINGS = {
   revealOnHover: true,
   hideTabHeader: true,
   hideViewHeader: true,
-  hidePdfToolbar: false
+  hidePdfToolbar: false,
+  autoPdf: false,
+  autoWebview: false,
+  autoMarkdown: false,
+  autoOther: false
 };
 var BorderlessTabPlugin = class extends import_obsidian.Plugin {
   constructor() {
     super(...arguments);
     this.settings = { ...DEFAULT_SETTINGS };
     this.borderlessLeaves = /* @__PURE__ */ new WeakSet();
+    this.automaticBorderlessDisabledLeaves = /* @__PURE__ */ new WeakSet();
     this.revealZones = /* @__PURE__ */ new WeakSet();
     this.revealTimers = /* @__PURE__ */ new WeakMap();
   }
@@ -87,13 +92,13 @@ var BorderlessTabPlugin = class extends import_obsidian.Plugin {
     });
   }
   addPaneMenuItem(menu, leaf) {
-    const enabled = this.borderlessLeaves.has(leaf);
+    const enabled = this.isLeafBorderless(leaf);
     menu.addItem((item) => {
       item.setTitle(enabled ? "Restore tab borders" : "Make tab borderless").setIcon(enabled ? "panels-top-left" : "square-dashed").setChecked(enabled).onClick(() => this.toggleLeaf(leaf));
     });
   }
   toggleLeaf(leaf) {
-    this.setLeafBorderless(leaf, !this.borderlessLeaves.has(leaf));
+    this.setLeafBorderless(leaf, !this.isLeafBorderless(leaf));
   }
   restoreBorderlessClasses() {
     window.requestAnimationFrame(() => {
@@ -104,16 +109,20 @@ var BorderlessTabPlugin = class extends import_obsidian.Plugin {
       });
       workspaceTabs.forEach((tabs) => this.clearWorkspaceClasses(tabs));
       const activeLeaf = this.app.workspace.activeLeaf;
-      if (activeLeaf && this.borderlessLeaves.has(activeLeaf)) {
+      if (activeLeaf && this.isLeafBorderless(activeLeaf)) {
         this.applyWorkspaceState(activeLeaf);
       }
     });
   }
   setLeafBorderless(leaf, enabled) {
     if (enabled) {
+      this.automaticBorderlessDisabledLeaves.delete(leaf);
       this.borderlessLeaves.add(leaf);
     } else {
       this.borderlessLeaves.delete(leaf);
+      if (this.isAutomaticallyBorderless(leaf)) {
+        this.automaticBorderlessDisabledLeaves.add(leaf);
+      }
     }
     this.restoreBorderlessClasses();
   }
@@ -123,6 +132,23 @@ var BorderlessTabPlugin = class extends import_obsidian.Plugin {
     tabs.classList.add(BORDERLESS_CLASS);
     this.applySettingsClasses(tabs, true);
     this.ensureRevealZone(tabs);
+  }
+  isLeafBorderless(leaf) {
+    return this.borderlessLeaves.has(leaf) || !this.automaticBorderlessDisabledLeaves.has(leaf) && this.isAutomaticallyBorderless(leaf);
+  }
+  isAutomaticallyBorderless(leaf) {
+    var _a;
+    const view = leaf.view;
+    const viewType = view.getViewType().toLowerCase();
+    const extension = (_a = view.file) == null ? void 0 : _a.extension.toLowerCase();
+    const isPdf = extension === "pdf" || viewType === "pdf" || viewType.includes("pdf");
+    if (isPdf) return this.settings.autoPdf;
+    const isWebview = viewType.includes("webview") || viewType.includes("web-view") || viewType.includes("webviewer") || viewType.includes("browser") || view.containerEl.classList.contains("webviewer") || view.containerEl.classList.contains("webview");
+    if (isWebview) return this.settings.autoWebview;
+    if (view instanceof import_obsidian.MarkdownView || extension === "md" || extension === "markdown") {
+      return this.settings.autoMarkdown;
+    }
+    return this.settings.autoOther;
   }
   clearWorkspaceClasses(tabs) {
     tabs.classList.remove(
@@ -233,8 +259,18 @@ var BorderlessTabSettingTab = class extends import_obsidian.PluginSettingTab {
     this.addVisibilitySetting(containerEl, "Tab header", "Hide the workspace tab strip.", "hideTabHeader");
     this.addVisibilitySetting(containerEl, "View header", "Hide the note title and back/forward controls.", "hideViewHeader");
     this.addVisibilitySetting(containerEl, "PDF toolbar", "Hide the toolbar in Obsidian\u2019s built-in PDF viewer.", "hidePdfToolbar");
+    new import_obsidian.Setting(containerEl).setName("Automatic borderless files").setHeading();
+    this.addAutomaticSetting(containerEl, "PDF files", "Automatically make PDF views borderless.", "autoPdf");
+    this.addAutomaticSetting(containerEl, "Web views", "Automatically make web views and browser views borderless.", "autoWebview");
+    this.addAutomaticSetting(containerEl, "Markdown files", "Automatically make Markdown notes borderless.", "autoMarkdown");
+    this.addAutomaticSetting(containerEl, "Other views", "Automatically make all other view types borderless.", "autoOther");
   }
   addVisibilitySetting(containerEl, name, description, key) {
+    new import_obsidian.Setting(containerEl).setName(name).setDesc(description).addToggle((toggle) => toggle.setValue(this.plugin.settings[key]).onChange(async (value) => {
+      await this.plugin.updateSettings({ [key]: value });
+    }));
+  }
+  addAutomaticSetting(containerEl, name, description, key) {
     new import_obsidian.Setting(containerEl).setName(name).setDesc(description).addToggle((toggle) => toggle.setValue(this.plugin.settings[key]).onChange(async (value) => {
       await this.plugin.updateSettings({ [key]: value });
     }));

@@ -18,6 +18,10 @@ interface BorderlessSettings {
 	hideTabHeader: boolean;
 	hideViewHeader: boolean;
 	hidePdfToolbar: boolean;
+	autoPdf: boolean;
+	autoWebview: boolean;
+	autoMarkdown: boolean;
+	autoOther: boolean;
 }
 
 const DEFAULT_SETTINGS: BorderlessSettings = {
@@ -25,12 +29,17 @@ const DEFAULT_SETTINGS: BorderlessSettings = {
 	revealOnHover: true,
 	hideTabHeader: true,
 	hideViewHeader: true,
-	hidePdfToolbar: false
+	hidePdfToolbar: false,
+	autoPdf: false,
+	autoWebview: false,
+	autoMarkdown: false,
+	autoOther: false
 };
 
 export default class BorderlessTabPlugin extends Plugin {
 	settings: BorderlessSettings = { ...DEFAULT_SETTINGS };
 	private readonly borderlessLeaves = new WeakSet<WorkspaceLeaf>();
+	private readonly automaticBorderlessDisabledLeaves = new WeakSet<WorkspaceLeaf>();
 	private readonly revealZones = new WeakSet<HTMLElement>();
 	private readonly revealTimers = new WeakMap<HTMLElement, number>();
 
@@ -90,7 +99,7 @@ export default class BorderlessTabPlugin extends Plugin {
 	}
 
 	private addPaneMenuItem(menu: Menu, leaf: WorkspaceLeaf): void {
-		const enabled = this.borderlessLeaves.has(leaf);
+		const enabled = this.isLeafBorderless(leaf);
 		menu.addItem((item) => {
 			item
 				.setTitle(enabled ? "Restore tab borders" : "Make tab borderless")
@@ -101,7 +110,7 @@ export default class BorderlessTabPlugin extends Plugin {
 	}
 
 	private toggleLeaf(leaf: WorkspaceLeaf): void {
-		this.setLeafBorderless(leaf, !this.borderlessLeaves.has(leaf));
+		this.setLeafBorderless(leaf, !this.isLeafBorderless(leaf));
 	}
 
 	private restoreBorderlessClasses(): void {
@@ -114,7 +123,7 @@ export default class BorderlessTabPlugin extends Plugin {
 
 			workspaceTabs.forEach((tabs) => this.clearWorkspaceClasses(tabs));
 			const activeLeaf = this.app.workspace.activeLeaf;
-			if (activeLeaf && this.borderlessLeaves.has(activeLeaf)) {
+			if (activeLeaf && this.isLeafBorderless(activeLeaf)) {
 				this.applyWorkspaceState(activeLeaf);
 			}
 		});
@@ -122,9 +131,13 @@ export default class BorderlessTabPlugin extends Plugin {
 
 	private setLeafBorderless(leaf: WorkspaceLeaf, enabled: boolean): void {
 		if (enabled) {
+			this.automaticBorderlessDisabledLeaves.delete(leaf);
 			this.borderlessLeaves.add(leaf);
 		} else {
 			this.borderlessLeaves.delete(leaf);
+			if (this.isAutomaticallyBorderless(leaf)) {
+				this.automaticBorderlessDisabledLeaves.add(leaf);
+			}
 		}
 
 		this.restoreBorderlessClasses();
@@ -137,6 +150,32 @@ export default class BorderlessTabPlugin extends Plugin {
 		tabs.classList.add(BORDERLESS_CLASS);
 		this.applySettingsClasses(tabs, true);
 		this.ensureRevealZone(tabs);
+	}
+
+	private isLeafBorderless(leaf: WorkspaceLeaf): boolean {
+		return this.borderlessLeaves.has(leaf) || (
+			!this.automaticBorderlessDisabledLeaves.has(leaf) && this.isAutomaticallyBorderless(leaf)
+		);
+	}
+
+	private isAutomaticallyBorderless(leaf: WorkspaceLeaf): boolean {
+		const view = leaf.view;
+		const viewType = view.getViewType().toLowerCase();
+		const extension = view.file?.extension.toLowerCase();
+		const isPdf = extension === "pdf" || viewType === "pdf" || viewType.includes("pdf");
+		if (isPdf) return this.settings.autoPdf;
+
+		const isWebview = viewType.includes("webview") || viewType.includes("web-view") ||
+			viewType.includes("webviewer") || viewType.includes("browser") ||
+			view.containerEl.classList.contains("webviewer") ||
+			view.containerEl.classList.contains("webview");
+		if (isWebview) return this.settings.autoWebview;
+
+		if (view instanceof MarkdownView || extension === "md" || extension === "markdown") {
+			return this.settings.autoMarkdown;
+		}
+
+		return this.settings.autoOther;
 	}
 
 	private clearWorkspaceClasses(tabs: HTMLElement): void {
@@ -279,6 +318,13 @@ class BorderlessTabSettingTab extends PluginSettingTab {
 		this.addVisibilitySetting(containerEl, "Tab header", "Hide the workspace tab strip.", "hideTabHeader");
 		this.addVisibilitySetting(containerEl, "View header", "Hide the note title and back/forward controls.", "hideViewHeader");
 		this.addVisibilitySetting(containerEl, "PDF toolbar", "Hide the toolbar in Obsidian’s built-in PDF viewer.", "hidePdfToolbar");
+		new Setting(containerEl)
+			.setName("Automatic borderless files")
+			.setHeading();
+		this.addAutomaticSetting(containerEl, "PDF files", "Automatically make PDF views borderless.", "autoPdf");
+		this.addAutomaticSetting(containerEl, "Web views", "Automatically make web views and browser views borderless.", "autoWebview");
+		this.addAutomaticSetting(containerEl, "Markdown files", "Automatically make Markdown notes borderless.", "autoMarkdown");
+		this.addAutomaticSetting(containerEl, "Other views", "Automatically make all other view types borderless.", "autoOther");
 	}
 
 	private addVisibilitySetting(
@@ -286,6 +332,22 @@ class BorderlessTabSettingTab extends PluginSettingTab {
 		name: string,
 		description: string,
 		key: "hideTabHeader" | "hideViewHeader" | "hidePdfToolbar"
+	): void {
+		new Setting(containerEl)
+			.setName(name)
+			.setDesc(description)
+			.addToggle((toggle) => toggle
+				.setValue(this.plugin.settings[key])
+				.onChange(async (value) => {
+					await this.plugin.updateSettings({ [key]: value });
+				}));
+	}
+
+	private addAutomaticSetting(
+		containerEl: HTMLElement,
+		name: string,
+		description: string,
+		key: "autoPdf" | "autoWebview" | "autoMarkdown" | "autoOther"
 	): void {
 		new Setting(containerEl)
 			.setName(name)
