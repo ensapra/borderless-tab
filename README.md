@@ -6,15 +6,16 @@ An Obsidian plugin that adds a borderless toggle to every open tab.
 
 ## Features
 
-- Toggle borderless mode independently for each open tab.
+- Toggle borderless mode independently for each open tab from Obsidian’s native pane menu.
 - Remove borders, outlines, and shadows from tab content.
+- Hide the tab strip and view header, including the note title and back/forward controls.
 - Use the command palette with **Toggle borderless tab** as an alternative.
 
 ## Usage
 
 1. Enable **Borderless Tab** in Obsidian’s community plugins settings.
-2. Click the square toggle icon in any tab header.
-3. Click it again to restore the tab’s borders.
+2. Right-click inside the note view, open the tab’s right-click menu, or use the three-dot pane menu—the same menu containing **Split right** and **Split down**—then choose **Make tab borderless**.
+3. Use **Restore tab borders** from that menu to undo it.
 
 The setting applies only to the current open tab and is reset when that tab is closed.
 

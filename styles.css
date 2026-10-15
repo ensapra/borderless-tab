@@ -1,31 +1,7 @@
-.borderless-tab-toggle {
-	align-items: center;
-	background: transparent;
-	border: 0;
-	border-radius: var(--radius-s);
-	color: var(--tab-text-color);
-	cursor: pointer;
-	display: inline-flex;
-	height: 22px;
-	justify-content: center;
-	margin-inline-start: 2px;
-	padding: 2px;
-	width: 22px;
-}
-
-.borderless-tab-toggle:hover,
-.borderless-tab-toggle.is-enabled {
-	background: var(--background-modifier-hover);
-	color: var(--text-accent);
-}
-
-.borderless-tab-toggle svg {
-	height: 14px;
-	width: 14px;
-}
-
 .borderless-tab-enabled,
 .borderless-tab-enabled > *,
+.borderless-tab-enabled .workspace-leaf,
+.borderless-tab-enabled .workspace-leaf-content,
 .borderless-tab-enabled .view-content,
 .borderless-tab-enabled .markdown-source-view,
 .borderless-tab-enabled .markdown-preview-view,
@@ -33,4 +9,23 @@
 	border: none !important;
 	box-shadow: none !important;
 	outline: none !important;
+}
+
+/* Remove the tab strip and the view header while keeping the document toolbar. */
+.workspace-tabs.borderless-tab-enabled .workspace-tab-header-container,
+.borderless-tab-enabled .view-header {
+	display: none !important;
+}
+
+/* Fallback for workspace layouts where the leaf and tab header use separate wrappers. */
+.workspace-tabs:has(.borderless-tab-enabled) .workspace-tab-header-container,
+.workspace-tabs:has(.borderless-tab-enabled) .view-header {
+	display: none !important;
+}
+
+.workspace-tabs.borderless-tab-enabled .workspace-tab-container,
+.workspace-tabs.borderless-tab-enabled .workspace-leaf,
+.workspace-tabs.borderless-tab-enabled .workspace-leaf-content {
+	border: none !important;
+	box-shadow: none !important;
 }

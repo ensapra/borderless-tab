@@ -1,96 +1,93 @@
-import { Plugin, WorkspaceLeaf, setIcon } from "obsidian";
+import { MarkdownView, Menu, Plugin, View, WorkspaceLeaf } from "obsidian";
 
 const BORDERLESS_CLASS = "borderless-tab-enabled";
-const TOGGLE_CLASS = "borderless-tab-toggle";
 
 export default class BorderlessTabPlugin extends Plugin {
 	private readonly borderlessLeaves = new WeakSet<WorkspaceLeaf>();
-	private readonly tabButtons = new WeakMap<WorkspaceLeaf, HTMLButtonElement>();
-	private layoutChangeHandler = (): void => this.refreshTabToggles();
 
-	async onload(): Promise<void> {
-		this.registerEvent(this.app.workspace.on("layout-change", this.layoutChangeHandler));
-		this.registerEvent(this.app.workspace.on("active-leaf-change", this.layoutChangeHandler));
+	onload(): void {
+		this.patchPaneMenu();
+		this.registerEvent(this.app.workspace.on("layout-change", () => this.restoreBorderlessClasses()));
+		this.registerEvent(this.app.workspace.on("editor-menu", (menu, _editor, view) => {
+			if (view instanceof MarkdownView) this.addPaneMenuItem(menu, view.leaf);
+		}));
 
 		this.addCommand({
 			id: "toggle-borderless-tab",
 			name: "Toggle borderless tab",
 			checkCallback: (checking) => {
-				const leaf = this.app.workspace.getMostRecentLeaf();
+				const leaf = this.app.workspace.activeLeaf;
 				if (!leaf) return false;
 				if (!checking) this.toggleLeaf(leaf);
 				return true;
 			}
 		});
-
-		this.refreshTabToggles();
 	}
 
 	onunload(): void {
-		this.app.workspace.iterateAllLeaves((leaf) => {
-			leaf.view.containerEl.removeClass(BORDERLESS_CLASS);
-			this.tabButtons.get(leaf)?.remove();
-		});
+		this.app.workspace.iterateAllLeaves((leaf) => this.setLeafBorderless(leaf, false));
 	}
 
-	private refreshTabToggles(): void {
-		window.requestAnimationFrame(() => {
-			this.app.workspace.iterateAllLeaves((leaf) => this.ensureTabToggle(leaf));
-		});
-	}
+	private patchPaneMenu(): void {
+		const originalOnPaneMenu = View.prototype.onPaneMenu;
+		const plugin = this;
 
-	private ensureTabToggle(leaf: WorkspaceLeaf): void {
-		const header = this.findTabHeader(leaf);
-		if (!header || this.tabButtons.has(leaf)) return;
-
-		const buttonHost = header.querySelector<HTMLElement>(".workspace-tab-header-inner") ?? header;
-		const button = buttonHost.createEl("button", {
-			cls: TOGGLE_CLASS,
-			attr: {
-				"aria-label": "Toggle borderless tab",
-				title: "Toggle borderless tab"
+		View.prototype.onPaneMenu = function (menu: Menu, source: string): void {
+			originalOnPaneMenu.call(this, menu, source);
+			if (source === "tab-header" || source === "more-options") {
+				plugin.addPaneMenuItem(menu, this.leaf);
 			}
+		};
+
+		this.register(() => {
+			View.prototype.onPaneMenu = originalOnPaneMenu;
 		});
-		button.addEventListener("click", (event) => {
-			event.preventDefault();
-			event.stopPropagation();
-			this.toggleLeaf(leaf);
+	}
+
+	private addPaneMenuItem(menu: Menu, leaf: WorkspaceLeaf): void {
+		const enabled = this.borderlessLeaves.has(leaf);
+		menu.addItem((item) => {
+			item
+				.setTitle(enabled ? "Restore tab borders" : "Make tab borderless")
+				.setIcon(enabled ? "panels-top-left" : "square-dashed")
+				.setChecked(enabled)
+				.onClick(() => this.toggleLeaf(leaf));
 		});
-		this.tabButtons.set(leaf, button);
-		this.updateButton(leaf);
 	}
 
 	private toggleLeaf(leaf: WorkspaceLeaf): void {
-		if (this.borderlessLeaves.has(leaf)) {
-			this.borderlessLeaves.delete(leaf);
-		} else {
+		this.setLeafBorderless(leaf, !this.borderlessLeaves.has(leaf));
+	}
+
+	private restoreBorderlessClasses(): void {
+		window.requestAnimationFrame(() => {
+			this.app.workspace.iterateAllLeaves((leaf) => {
+				if (this.borderlessLeaves.has(leaf)) this.setLeafBorderless(leaf, true);
+			});
+		});
+	}
+
+	private setLeafBorderless(leaf: WorkspaceLeaf, enabled: boolean): void {
+		if (enabled) {
 			this.borderlessLeaves.add(leaf);
+		} else {
+			this.borderlessLeaves.delete(leaf);
 		}
-		leaf.view.containerEl.toggleClass(BORDERLESS_CLASS, this.borderlessLeaves.has(leaf));
-		this.updateButton(leaf);
+
+		const leafElement = this.findAncestor(leaf.view.containerEl, "workspace-leaf");
+		const tabs = this.findAncestor(leafElement ?? leaf.view.containerEl, "workspace-tabs");
+
+		leaf.view.containerEl.classList.toggle(BORDERLESS_CLASS, enabled);
+		leafElement?.classList.toggle(BORDERLESS_CLASS, enabled);
+		tabs?.classList.toggle(BORDERLESS_CLASS, enabled);
 	}
 
-	private updateButton(leaf: WorkspaceLeaf): void {
-		const button = this.tabButtons.get(leaf);
-		if (!button) return;
-		const enabled = this.borderlessLeaves.has(leaf);
-		setIcon(button, enabled ? "panels-top-left" : "square-dashed");
-		button.toggleClass("is-enabled", enabled);
-		button.setAttribute("aria-pressed", String(enabled));
-		button.setAttribute("title", enabled ? "Restore tab borders" : "Make tab borderless");
+	private findAncestor(element: HTMLElement, className: string): HTMLElement | null {
+		let current: HTMLElement | null = element;
+		while (current) {
+			if (current.classList.contains(className)) return current;
+			current = current.parentElement;
+		}
+		return null;
 	}
-
-	private findTabHeader(leaf: WorkspaceLeaf): HTMLElement | null {
-		const leafElement = leaf.view.containerEl.closest<HTMLElement>(".workspace-leaf");
-		const tabs = leafElement?.closest<HTMLElement>(".workspace-tabs");
-		if (!tabs) return null;
-
-		const leaves = Array.from(tabs.querySelectorAll<HTMLElement>(".workspace-leaf"));
-		const leafIndex = leaves.indexOf(leafElement as HTMLElement);
-		if (leafIndex < 0) return null;
-
-		const headers = Array.from(tabs.querySelectorAll<HTMLElement>(".workspace-tab-header"));
-		return headers[leafIndex] ?? null;
-	}
-
 }
