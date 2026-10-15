@@ -4,6 +4,7 @@ import {
 	Menu,
 	Plugin,
 	PluginSettingTab,
+	SettingDefinitionItem,
 	ToggleComponent,
 	Setting,
 	View,
@@ -36,6 +37,36 @@ const DEFAULT_SETTINGS: BorderlessSettings = {
 	autoOther: false
 };
 
+const BORDERLESS_SETTING_KEYS: Array<keyof BorderlessSettings> = [
+	"animate",
+	"revealOnHover",
+	"hideTabHeader",
+	"hideViewHeader",
+	"hidePdfToolbar",
+	"autoPdf",
+	"autoWebview",
+	"autoMarkdown",
+	"autoOther"
+];
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+	return typeof value === "object" && value !== null;
+}
+
+function isBorderlessSettingKey(key: string): key is keyof BorderlessSettings {
+	return BORDERLESS_SETTING_KEYS.includes(key as keyof BorderlessSettings);
+}
+
+function readSettings(data: unknown): Partial<BorderlessSettings> {
+	if (!isRecord(data)) return {};
+
+	const settings: Partial<BorderlessSettings> = {};
+	for (const key of BORDERLESS_SETTING_KEYS) {
+		if (typeof data[key] === "boolean") settings[key] = data[key];
+	}
+	return settings;
+}
+
 export default class BorderlessTabPlugin extends Plugin {
 	settings: BorderlessSettings = { ...DEFAULT_SETTINGS };
 	private readonly borderlessLeaves = new WeakSet<WorkspaceLeaf>();
@@ -54,10 +85,10 @@ export default class BorderlessTabPlugin extends Plugin {
 		}));
 
 		this.addCommand({
-			id: "toggle-borderless-tab",
-			name: "Toggle borderless tab",
+			id: "toggle",
+			name: "Toggle borderless",
 			checkCallback: (checking) => {
-				const leaf = this.app.workspace.activeLeaf;
+				const leaf = this.app.workspace.getMostRecentLeaf();
 				if (!leaf) return false;
 				if (!checking) this.toggleLeaf(leaf);
 				return true;
@@ -73,7 +104,8 @@ export default class BorderlessTabPlugin extends Plugin {
 	}
 
 	async loadSettings(): Promise<void> {
-		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+		const data = await this.loadData() as unknown;
+		this.settings = { ...DEFAULT_SETTINGS, ...readSettings(data) };
 	}
 
 	async updateSettings(changes: Partial<BorderlessSettings>): Promise<void> {
@@ -84,12 +116,12 @@ export default class BorderlessTabPlugin extends Plugin {
 
 	private patchPaneMenu(): void {
 		const originalOnPaneMenu = View.prototype.onPaneMenu;
-		const plugin = this;
+		const addPaneMenuItem = this.addPaneMenuItem.bind(this);
 
-		View.prototype.onPaneMenu = function (menu: Menu, source: string): void {
+		View.prototype.onPaneMenu = function (this: View, menu: Menu, source: string): void {
 			originalOnPaneMenu.call(this, menu, source);
 			if (source === "tab-header" || source === "more-options") {
-				plugin.addPaneMenuItem(menu, this.leaf);
+				addPaneMenuItem(menu, this.leaf);
 			}
 		};
 
@@ -158,7 +190,7 @@ export default class BorderlessTabPlugin extends Plugin {
 	private isAutomaticallyBorderless(leaf: WorkspaceLeaf): boolean {
 		const view = leaf.view;
 		const viewType = view.getViewType().toLowerCase();
-		const extension = view.file?.extension.toLowerCase();
+		const extension = view instanceof MarkdownView ? view.file?.extension.toLowerCase() : undefined;
 		const isPdf = extension === "pdf" || viewType === "pdf" || viewType.includes("pdf");
 		if (isPdf) return this.settings.autoPdf;
 
@@ -202,7 +234,7 @@ export default class BorderlessTabPlugin extends Plugin {
 			"borderless-tab-hide-pdf-toolbar": this.settings.hidePdfToolbar
 		};
 
-		for (const [className, settingEnabled] of Object.entries(classes)) {
+		for (const [className, settingEnabled] of Object.entries(classes) as [string, boolean][]) {
 			tabs.classList.toggle(className, enabled && settingEnabled);
 		}
 		if (!enabled || !this.settings.revealOnHover) this.setHeadersRevealed(tabs, false);
@@ -211,9 +243,7 @@ export default class BorderlessTabPlugin extends Plugin {
 	private ensureRevealZone(tabs: HTMLElement): void {
 		if (this.revealZones.has(tabs)) return;
 		this.revealZones.add(tabs);
-		const revealZone = document.createElement("div");
-		revealZone.className = "borderless-tab-reveal-zone";
-		tabs.appendChild(revealZone);
+		const revealZone = tabs.createDiv({ cls: "borderless-tab-reveal-zone" });
 
 		this.registerDomEvent(revealZone, "mouseenter", () => {
 			if (this.settings.revealOnHover && tabs.classList.contains("borderless-tab-hover-reveal")) {
@@ -274,6 +304,58 @@ export default class BorderlessTabPlugin extends Plugin {
 class BorderlessTabSettingTab extends PluginSettingTab {
 	constructor(app: App, private readonly plugin: BorderlessTabPlugin) {
 		super(app, plugin);
+	}
+
+	getSettingDefinitions(): SettingDefinitionItem[] {
+		return [
+			{
+				name: "Borderless behavior",
+				items: [
+					this.toggleDefinition("Reveal headers on hover", "Show hidden headers when the pointer reaches the top of the tab group.", "revealOnHover"),
+					this.toggleDefinition("Animate header transitions", "Animate headers when they hide and reveal.", "animate", () => !this.plugin.settings.revealOnHover)
+				]
+			},
+			{
+				name: "Hidden in borderless mode",
+				items: [
+					this.toggleDefinition("Tab header", "Hide the workspace tab strip.", "hideTabHeader"),
+					this.toggleDefinition("View header", "Hide the note title and back/forward controls.", "hideViewHeader"),
+					this.toggleDefinition("PDF toolbar", "Hide the toolbar in Obsidian's built-in PDF viewer.", "hidePdfToolbar")
+				]
+			},
+			{
+				name: "Automatic borderless files",
+				items: [
+					this.toggleDefinition("PDF files", "Automatically make PDF views borderless.", "autoPdf"),
+					this.toggleDefinition("Web views", "Automatically make web views and browser views borderless.", "autoWebview"),
+					this.toggleDefinition("Markdown files", "Automatically make Markdown notes borderless.", "autoMarkdown"),
+					this.toggleDefinition("Other views", "Automatically make all other view types borderless.", "autoOther")
+				]
+			}
+		];
+	}
+
+	getControlValue(key: string): unknown {
+		return isBorderlessSettingKey(key) ? this.plugin.settings[key] : undefined;
+	}
+
+	async setControlValue(key: string, value: unknown): Promise<void> {
+		if (!isBorderlessSettingKey(key) || typeof value !== "boolean") return;
+		await this.plugin.updateSettings({ [key]: value });
+		this.refreshDomState();
+	}
+
+	private toggleDefinition(
+		name: string,
+		desc: string,
+		key: keyof BorderlessSettings,
+		disabled?: () => boolean
+	): SettingDefinitionItem {
+		return {
+			name,
+			desc,
+			control: { type: "toggle", key, defaultValue: DEFAULT_SETTINGS[key], disabled }
+		};
 	}
 
 	display(): void {

@@ -1,83 +1,83 @@
-.borderless-tab-enabled,
-.borderless-tab-enabled > *,
-.borderless-tab-enabled .workspace-leaf,
-.borderless-tab-enabled .workspace-leaf-content,
-.borderless-tab-enabled .view-content,
-.borderless-tab-enabled .markdown-source-view,
-.borderless-tab-enabled .markdown-preview-view,
-.borderless-tab-enabled .webviewer-container,
-.borderless-tab-enabled .webviewer-content,
-.borderless-tab-enabled .webviewer-content iframe,
-.borderless-tab-enabled .webview-container,
-.borderless-tab-enabled .webview-content,
-.borderless-tab-enabled .webview-content iframe,
-.borderless-tab-enabled .cm-editor {
-	border: none !important;
-	box-shadow: none !important;
-	outline: none !important;
+body .borderless-tab-enabled,
+body .borderless-tab-enabled > *,
+body .borderless-tab-enabled .workspace-leaf,
+body .borderless-tab-enabled .workspace-leaf-content,
+body .borderless-tab-enabled .view-content,
+body .borderless-tab-enabled .markdown-source-view,
+body .borderless-tab-enabled .markdown-preview-view,
+body .borderless-tab-enabled .webviewer-container,
+body .borderless-tab-enabled .webviewer-content,
+body .borderless-tab-enabled .webviewer-content iframe,
+body .borderless-tab-enabled .webview-container,
+body .borderless-tab-enabled .webview-content,
+body .borderless-tab-enabled .webview-content iframe,
+body .borderless-tab-enabled .cm-editor {
+	border: none;
+	box-shadow: none;
+	outline: none;
 }
 
-.workspace-tabs.borderless-tab-enabled {
+body .workspace-tabs.borderless-tab-enabled {
 	position: relative;
 }
 
 /* Collapse only the headers selected in the plugin settings. */
-.workspace-tabs.borderless-tab-enabled.borderless-tab-hide-tab-header .workspace-tab-header-container,
-.workspace-tabs.borderless-tab-enabled.borderless-tab-hide-view-header .view-header {
-	display: flex !important;
-	height: auto !important;
-	max-height: 0 !important;
-	min-height: 0 !important;
+body .workspace-tabs.borderless-tab-enabled.borderless-tab-hide-tab-header .workspace-tab-header-container,
+body .workspace-tabs.borderless-tab-enabled.borderless-tab-hide-view-header .view-header {
+	display: flex;
+	height: auto;
+	max-height: 0;
+	min-height: 0;
 	opacity: 0;
-	overflow: hidden !important;
+	overflow: hidden;
 	pointer-events: none;
 	transform: translateY(-12px);
 }
 
 /* Animation is optional. */
-.workspace-tabs.borderless-tab-enabled.borderless-tab-animated.borderless-tab-hide-tab-header .workspace-tab-header-container,
-.workspace-tabs.borderless-tab-enabled.borderless-tab-animated.borderless-tab-hide-view-header .view-header {
+body .workspace-tabs.borderless-tab-enabled.borderless-tab-animated.borderless-tab-hide-tab-header .workspace-tab-header-container,
+body .workspace-tabs.borderless-tab-enabled.borderless-tab-animated.borderless-tab-hide-view-header .view-header {
 	transition: max-height 180ms ease, opacity 140ms ease, transform 180ms ease;
 }
 
 /* Reveal only the headers selected to be hidden. */
-.workspace-tabs.borderless-tab-enabled.borderless-tab-hover-reveal.borderless-tab-revealed.borderless-tab-hide-tab-header .workspace-tab-header-container,
-.workspace-tabs.borderless-tab-enabled.borderless-tab-hover-reveal.borderless-tab-revealed.borderless-tab-hide-view-header .view-header,
-.workspace-tabs.borderless-tab-enabled.borderless-tab-hover-reveal.borderless-tab-revealed.borderless-tab-hide-pdf-toolbar .pdf-toolbar {
-	max-height: 96px !important;
+body .workspace-tabs.borderless-tab-enabled.borderless-tab-hover-reveal.borderless-tab-revealed.borderless-tab-hide-tab-header .workspace-tab-header-container,
+body .workspace-tabs.borderless-tab-enabled.borderless-tab-hover-reveal.borderless-tab-revealed.borderless-tab-hide-view-header .view-header,
+body .workspace-tabs.borderless-tab-enabled.borderless-tab-hover-reveal.borderless-tab-revealed.borderless-tab-hide-pdf-toolbar .pdf-toolbar {
+	max-height: 96px;
 	opacity: 1;
 	pointer-events: auto;
 	transform: translateY(0);
 }
 
-.workspace-tabs.borderless-tab-enabled.borderless-tab-hover-reveal.borderless-tab-revealed.borderless-tab-hide-pdf-toolbar .pdf-toolbar {
-	display: flex !important;
+body .workspace-tabs.borderless-tab-enabled.borderless-tab-hover-reveal.borderless-tab-revealed.borderless-tab-hide-pdf-toolbar .pdf-toolbar {
+	display: flex;
 }
 
-.workspace-tabs.borderless-tab-enabled.borderless-tab-hide-pdf-toolbar .pdf-toolbar {
-	display: none !important;
+body .workspace-tabs.borderless-tab-enabled.borderless-tab-hide-pdf-toolbar .pdf-toolbar {
+	display: none;
 }
 
 /* Keep the PDF.js Ctrl+F find bar separate from the main PDF toolbar. */
-.workspace-tabs.borderless-tab-enabled .pdf-findbar,
-.workspace-tabs.borderless-tab-enabled .findbar,
-.workspace-tabs.borderless-tab-enabled #findbar {
-	display: none !important;
-	max-height: 0 !important;
-	opacity: 0 !important;
-	pointer-events: none !important;
+body .workspace-tabs.borderless-tab-enabled .pdf-findbar,
+body .workspace-tabs.borderless-tab-enabled .findbar,
+body .workspace-tabs.borderless-tab-enabled #findbar {
+	display: none;
+	max-height: 0;
+	opacity: 0;
+	pointer-events: none;
 }
 
-.workspace-tabs.borderless-tab-enabled .pdf-findbar:focus-within,
-.workspace-tabs.borderless-tab-enabled .findbar:focus-within,
-.workspace-tabs.borderless-tab-enabled #findbar:focus-within {
-	display: flex !important;
-	max-height: 96px !important;
-	opacity: 1 !important;
-	pointer-events: auto !important;
+body .workspace-tabs.borderless-tab-enabled .pdf-findbar:focus-within,
+body .workspace-tabs.borderless-tab-enabled .findbar:focus-within,
+body .workspace-tabs.borderless-tab-enabled #findbar:focus-within {
+	display: flex;
+	max-height: 96px;
+	opacity: 1;
+	pointer-events: auto;
 }
 
-.workspace-tabs.borderless-tab-enabled.borderless-tab-hover-reveal .borderless-tab-reveal-zone {
+body .workspace-tabs.borderless-tab-enabled.borderless-tab-hover-reveal .borderless-tab-reveal-zone {
 	display: block;
 	height: 16px;
 	left: 0;
@@ -88,29 +88,29 @@
 	z-index: 1000;
 }
 
-.workspace-tabs:not(.borderless-tab-enabled) .borderless-tab-reveal-zone,
-.workspace-tabs.borderless-tab-enabled:not(.borderless-tab-hover-reveal) .borderless-tab-reveal-zone {
+body .workspace-tabs:not(.borderless-tab-enabled) .borderless-tab-reveal-zone,
+body .workspace-tabs.borderless-tab-enabled:not(.borderless-tab-hover-reveal) .borderless-tab-reveal-zone {
 	display: none;
 }
 
-.workspace-tabs.borderless-tab-enabled .workspace-tab-container,
-.workspace-tabs.borderless-tab-enabled .workspace-leaf,
-.workspace-tabs.borderless-tab-enabled .workspace-leaf-content {
-	border: none !important;
-	box-shadow: none !important;
+body .workspace-tabs.borderless-tab-enabled .workspace-tab-container,
+body .workspace-tabs.borderless-tab-enabled .workspace-leaf,
+body .workspace-tabs.borderless-tab-enabled .workspace-leaf-content {
+	border: none;
+	box-shadow: none;
 }
 
 /* Web views render their page inside an iframe with its own default border. */
-.workspace-tabs.borderless-tab-enabled .webviewer-content iframe,
-.workspace-tabs.borderless-tab-enabled .webview-content iframe {
+body .workspace-tabs.borderless-tab-enabled .webviewer-content iframe,
+body .workspace-tabs.borderless-tab-enabled .webview-content iframe {
 	display: block;
 	width: 100%;
 	height: 100%;
 }
 
 @media (prefers-reduced-motion: reduce) {
-	.workspace-tabs.borderless-tab-enabled.borderless-tab-animated.borderless-tab-hide-tab-header .workspace-tab-header-container,
-	.workspace-tabs.borderless-tab-enabled.borderless-tab-animated.borderless-tab-hide-view-header .view-header {
+	body .workspace-tabs.borderless-tab-enabled.borderless-tab-animated.borderless-tab-hide-tab-header .workspace-tab-header-container,
+	body .workspace-tabs.borderless-tab-enabled.borderless-tab-animated.borderless-tab-hide-view-header .view-header {
 		transition: none;
 	}
 }
