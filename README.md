@@ -2,8 +2,6 @@
 
 An Obsidian plugin that adds a borderless toggle to every open tab.
 
-> **AI disclosure:** This plugin was fully made by AI, including the source code, styling, configuration, and documentation.
-
 ## Features
 
 - Toggle borderless mode independently for each open tab from Obsidian’s native pane menu.
@@ -13,6 +11,9 @@ An Obsidian plugin that adds a borderless toggle to every open tab.
 - Optionally hide the built-in PDF toolbar.
 - Configure animation, hover reveal, and hidden elements from the plugin settings.
 - Use the command palette with **Toggle borderless tab** as an alternative.
+
+<img width="1917" height="1077" alt="image" src="https://github.com/user-attachments/assets/3ea05e3f-3ae3-4ec3-a1cf-5cc7998da51c" />
+
 
 ## Usage
 
@@ -39,3 +40,6 @@ npm run dev
 ```
 
 The generated `main.js`, along with `manifest.json` and `styles.css`, is loaded directly by Obsidian.
+
+
+> **AI disclosure:** This plugin was fully made by AI, including the source code, styling, configuration, and documentation.
