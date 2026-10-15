@@ -2,8 +2,6 @@
 
 An Obsidian plugin that adds a borderless toggle to every open tab.
 
-> **AI disclosure:** This plugin was fully made by AI, including the source code, styling, configuration, and documentation.
-
 ## Features
 
 - Toggle borderless mode independently for each open tab from Obsidian’s native pane menu.
@@ -42,3 +40,6 @@ npm run dev
 ```
 
 The generated `main.js`, along with `manifest.json` and `styles.css`, is loaded directly by Obsidian.
+
+
+> **AI disclosure:** This plugin was fully made by AI, including the source code, styling, configuration, and documentation.
