@@ -18,6 +18,7 @@ An Obsidian plugin that adds a borderless toggle to every open tab.
 
 The setting applies only to the current open tab and is reset when that tab is closed.
 
+
 ## Development
 
 Install dependencies and build the plugin:
