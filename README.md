@@ -14,6 +14,8 @@ An Obsidian plugin that adds a borderless toggle to every open tab.
 - Configure animation, hover reveal, and hidden elements from the plugin settings.
 - Use the command palette with **Toggle borderless tab** as an alternative.
 
+![Uploading image.png…]()
+
 ## Usage
 
 1. Enable **Borderless Tab** in Obsidian’s community plugins settings.
