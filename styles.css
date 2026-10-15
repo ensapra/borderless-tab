@@ -36,11 +36,16 @@
 
 /* Reveal only the headers selected to be hidden. */
 .workspace-tabs.borderless-tab-enabled.borderless-tab-hover-reveal.borderless-tab-revealed.borderless-tab-hide-tab-header .workspace-tab-header-container,
-.workspace-tabs.borderless-tab-enabled.borderless-tab-hover-reveal.borderless-tab-revealed.borderless-tab-hide-view-header .view-header {
+.workspace-tabs.borderless-tab-enabled.borderless-tab-hover-reveal.borderless-tab-revealed.borderless-tab-hide-view-header .view-header,
+.workspace-tabs.borderless-tab-enabled.borderless-tab-hover-reveal.borderless-tab-revealed.borderless-tab-hide-pdf-toolbar .pdf-toolbar {
 	max-height: 96px !important;
 	opacity: 1;
 	pointer-events: auto;
 	transform: translateY(0);
+}
+
+.workspace-tabs.borderless-tab-enabled.borderless-tab-hover-reveal.borderless-tab-revealed.borderless-tab-hide-pdf-toolbar .pdf-toolbar {
+	display: flex !important;
 }
 
 .workspace-tabs.borderless-tab-enabled.borderless-tab-hide-pdf-toolbar .pdf-toolbar {
@@ -68,6 +73,15 @@
 .workspace-tabs.borderless-tab-enabled .workspace-leaf-content {
 	border: none !important;
 	box-shadow: none !important;
+}
+
+/* Never hide or disable the native window controls. */
+.titlebar-button-container,
+.titlebar-button-container .titlebar-button {
+	display: flex !important;
+	opacity: 1 !important;
+	pointer-events: auto !important;
+	visibility: visible !important;
 }
 
 @media (prefers-reduced-motion: reduce) {

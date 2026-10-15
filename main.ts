@@ -39,6 +39,7 @@ export default class BorderlessTabPlugin extends Plugin {
 		this.addSettingTab(new BorderlessTabSettingTab(this.app, this));
 		this.patchPaneMenu();
 		this.registerEvent(this.app.workspace.on("layout-change", () => this.restoreBorderlessClasses()));
+		this.registerEvent(this.app.workspace.on("active-leaf-change", () => this.restoreBorderlessClasses()));
 		this.registerEvent(this.app.workspace.on("editor-menu", (menu, _editor, view) => {
 			if (view instanceof MarkdownView) this.addPaneMenuItem(menu, view.leaf);
 		}));
@@ -56,7 +57,10 @@ export default class BorderlessTabPlugin extends Plugin {
 	}
 
 	onunload(): void {
-		this.app.workspace.iterateAllLeaves((leaf) => this.setLeafBorderless(leaf, false));
+		this.app.workspace.iterateAllLeaves((leaf) => {
+			const tabs = this.findTabs(leaf);
+			if (tabs) this.clearWorkspaceClasses(tabs);
+		});
 	}
 
 	async loadSettings(): Promise<void> {
@@ -66,10 +70,7 @@ export default class BorderlessTabPlugin extends Plugin {
 	async updateSettings(changes: Partial<BorderlessSettings>): Promise<void> {
 		Object.assign(this.settings, changes);
 		await this.saveData(this.settings);
-
-		this.app.workspace.iterateAllLeaves((leaf) => {
-			if (this.borderlessLeaves.has(leaf)) this.setLeafBorderless(leaf, true);
-		});
+		this.restoreBorderlessClasses();
 	}
 
 	private patchPaneMenu(): void {
@@ -105,9 +106,17 @@ export default class BorderlessTabPlugin extends Plugin {
 
 	private restoreBorderlessClasses(): void {
 		window.requestAnimationFrame(() => {
+			const workspaceTabs = new Set<HTMLElement>();
 			this.app.workspace.iterateAllLeaves((leaf) => {
-				if (this.borderlessLeaves.has(leaf)) this.setLeafBorderless(leaf, true);
+				const tabs = this.findTabs(leaf);
+				if (tabs) workspaceTabs.add(tabs);
 			});
+
+			workspaceTabs.forEach((tabs) => this.clearWorkspaceClasses(tabs));
+			const activeLeaf = this.app.workspace.activeLeaf;
+			if (activeLeaf && this.borderlessLeaves.has(activeLeaf)) {
+				this.applyWorkspaceState(activeLeaf);
+			}
 		});
 	}
 
@@ -118,17 +127,34 @@ export default class BorderlessTabPlugin extends Plugin {
 			this.borderlessLeaves.delete(leaf);
 		}
 
-		const leafElement = this.findAncestor(leaf.view.containerEl, "workspace-leaf");
-		const tabs = this.findAncestor(leafElement ?? leaf.view.containerEl, "workspace-tabs");
+		this.restoreBorderlessClasses();
+	}
 
-		leaf.view.containerEl.classList.toggle(BORDERLESS_CLASS, enabled);
-		leafElement?.classList.toggle(BORDERLESS_CLASS, enabled);
-		if (tabs) {
-			tabs.classList.toggle(BORDERLESS_CLASS, enabled);
-			this.applySettingsClasses(tabs, enabled);
-			this.ensureRevealZone(tabs);
-			if (!enabled) this.setHeadersRevealed(tabs, false);
-		}
+	private applyWorkspaceState(leaf: WorkspaceLeaf): void {
+		const tabs = this.findTabs(leaf);
+		if (!tabs) return;
+
+		tabs.classList.add(BORDERLESS_CLASS);
+		this.applySettingsClasses(tabs, true);
+		this.ensureRevealZone(tabs);
+	}
+
+	private clearWorkspaceClasses(tabs: HTMLElement): void {
+		tabs.classList.remove(
+			BORDERLESS_CLASS,
+			"borderless-tab-animated",
+			"borderless-tab-hover-reveal",
+			"borderless-tab-hide-tab-header",
+			"borderless-tab-hide-view-header",
+			"borderless-tab-hide-pdf-toolbar",
+			"borderless-tab-revealed"
+		);
+		this.setHeadersRevealed(tabs, false);
+	}
+
+	private findTabs(leaf: WorkspaceLeaf): HTMLElement | null {
+		const leafElement = this.findAncestor(leaf.view.containerEl, "workspace-leaf");
+		return this.findAncestor(leafElement ?? leaf.view.containerEl, "workspace-tabs");
 	}
 
 	private applySettingsClasses(tabs: HTMLElement, enabled: boolean): void {

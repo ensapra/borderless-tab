@@ -44,6 +44,7 @@ var BorderlessTabPlugin = class extends import_obsidian.Plugin {
     this.addSettingTab(new BorderlessTabSettingTab(this.app, this));
     this.patchPaneMenu();
     this.registerEvent(this.app.workspace.on("layout-change", () => this.restoreBorderlessClasses()));
+    this.registerEvent(this.app.workspace.on("active-leaf-change", () => this.restoreBorderlessClasses()));
     this.registerEvent(this.app.workspace.on("editor-menu", (menu, _editor, view) => {
       if (view instanceof import_obsidian.MarkdownView) this.addPaneMenuItem(menu, view.leaf);
     }));
@@ -59,7 +60,10 @@ var BorderlessTabPlugin = class extends import_obsidian.Plugin {
     });
   }
   onunload() {
-    this.app.workspace.iterateAllLeaves((leaf) => this.setLeafBorderless(leaf, false));
+    this.app.workspace.iterateAllLeaves((leaf) => {
+      const tabs = this.findTabs(leaf);
+      if (tabs) this.clearWorkspaceClasses(tabs);
+    });
   }
   async loadSettings() {
     this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
@@ -67,9 +71,7 @@ var BorderlessTabPlugin = class extends import_obsidian.Plugin {
   async updateSettings(changes) {
     Object.assign(this.settings, changes);
     await this.saveData(this.settings);
-    this.app.workspace.iterateAllLeaves((leaf) => {
-      if (this.borderlessLeaves.has(leaf)) this.setLeafBorderless(leaf, true);
-    });
+    this.restoreBorderlessClasses();
   }
   patchPaneMenu() {
     const originalOnPaneMenu = import_obsidian.View.prototype.onPaneMenu;
@@ -95,9 +97,16 @@ var BorderlessTabPlugin = class extends import_obsidian.Plugin {
   }
   restoreBorderlessClasses() {
     window.requestAnimationFrame(() => {
+      const workspaceTabs = /* @__PURE__ */ new Set();
       this.app.workspace.iterateAllLeaves((leaf) => {
-        if (this.borderlessLeaves.has(leaf)) this.setLeafBorderless(leaf, true);
+        const tabs = this.findTabs(leaf);
+        if (tabs) workspaceTabs.add(tabs);
       });
+      workspaceTabs.forEach((tabs) => this.clearWorkspaceClasses(tabs));
+      const activeLeaf = this.app.workspace.activeLeaf;
+      if (activeLeaf && this.borderlessLeaves.has(activeLeaf)) {
+        this.applyWorkspaceState(activeLeaf);
+      }
     });
   }
   setLeafBorderless(leaf, enabled) {
@@ -106,16 +115,30 @@ var BorderlessTabPlugin = class extends import_obsidian.Plugin {
     } else {
       this.borderlessLeaves.delete(leaf);
     }
+    this.restoreBorderlessClasses();
+  }
+  applyWorkspaceState(leaf) {
+    const tabs = this.findTabs(leaf);
+    if (!tabs) return;
+    tabs.classList.add(BORDERLESS_CLASS);
+    this.applySettingsClasses(tabs, true);
+    this.ensureRevealZone(tabs);
+  }
+  clearWorkspaceClasses(tabs) {
+    tabs.classList.remove(
+      BORDERLESS_CLASS,
+      "borderless-tab-animated",
+      "borderless-tab-hover-reveal",
+      "borderless-tab-hide-tab-header",
+      "borderless-tab-hide-view-header",
+      "borderless-tab-hide-pdf-toolbar",
+      "borderless-tab-revealed"
+    );
+    this.setHeadersRevealed(tabs, false);
+  }
+  findTabs(leaf) {
     const leafElement = this.findAncestor(leaf.view.containerEl, "workspace-leaf");
-    const tabs = this.findAncestor(leafElement != null ? leafElement : leaf.view.containerEl, "workspace-tabs");
-    leaf.view.containerEl.classList.toggle(BORDERLESS_CLASS, enabled);
-    leafElement == null ? void 0 : leafElement.classList.toggle(BORDERLESS_CLASS, enabled);
-    if (tabs) {
-      tabs.classList.toggle(BORDERLESS_CLASS, enabled);
-      this.applySettingsClasses(tabs, enabled);
-      this.ensureRevealZone(tabs);
-      if (!enabled) this.setHeadersRevealed(tabs, false);
-    }
+    return this.findAncestor(leafElement != null ? leafElement : leaf.view.containerEl, "workspace-tabs");
   }
   applySettingsClasses(tabs, enabled) {
     const classes = {
