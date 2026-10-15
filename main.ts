@@ -226,15 +226,15 @@ export default class BorderlessTabPlugin extends Plugin {
 	}
 
 	private applySettingsClasses(tabs: HTMLElement, enabled: boolean): void {
-		const classes = {
-			"borderless-tab-animated": this.settings.animate && this.settings.revealOnHover,
-			"borderless-tab-hover-reveal": this.settings.revealOnHover,
-			"borderless-tab-hide-tab-header": this.settings.hideTabHeader,
-			"borderless-tab-hide-view-header": this.settings.hideViewHeader,
-			"borderless-tab-hide-pdf-toolbar": this.settings.hidePdfToolbar
-		};
+		const classes: ReadonlyArray<readonly [string, boolean]> = [
+			["borderless-tab-animated", this.settings.animate && this.settings.revealOnHover],
+			["borderless-tab-hover-reveal", this.settings.revealOnHover],
+			["borderless-tab-hide-tab-header", this.settings.hideTabHeader],
+			["borderless-tab-hide-view-header", this.settings.hideViewHeader],
+			["borderless-tab-hide-pdf-toolbar", this.settings.hidePdfToolbar]
+		];
 
-		for (const [className, settingEnabled] of Object.entries(classes)) {
+		for (const [className, settingEnabled] of classes) {
 			tabs.classList.toggle(className, enabled && settingEnabled);
 		}
 		if (!enabled || !this.settings.revealOnHover) this.setHeadersRevealed(tabs, false);
