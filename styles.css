@@ -17,6 +17,30 @@
 	display: none !important;
 }
 
+.workspace-tabs.borderless-tab-enabled.borderless-tab-revealed .workspace-tab-header-container,
+.workspace-tabs.borderless-tab-enabled.borderless-tab-revealed .view-header {
+	display: flex !important;
+}
+
+.workspace-tabs.borderless-tab-enabled {
+	position: relative;
+}
+
+.workspace-tabs.borderless-tab-enabled .borderless-tab-reveal-zone {
+	display: block;
+	height: 16px;
+	left: 0;
+	pointer-events: auto;
+	position: absolute;
+	right: 0;
+	top: 0;
+	z-index: 1000;
+}
+
+.workspace-tabs:not(.borderless-tab-enabled) .borderless-tab-reveal-zone {
+	display: none;
+}
+
 /* Fallback for workspace layouts where the leaf and tab header use separate wrappers. */
 .workspace-tabs:has(.borderless-tab-enabled) .workspace-tab-header-container,
 .workspace-tabs:has(.borderless-tab-enabled) .view-header {

@@ -28,6 +28,8 @@ var BorderlessTabPlugin = class extends import_obsidian.Plugin {
   constructor() {
     super(...arguments);
     this.borderlessLeaves = /* @__PURE__ */ new WeakSet();
+    this.revealZones = /* @__PURE__ */ new WeakSet();
+    this.revealTimers = /* @__PURE__ */ new WeakMap();
   }
   onload() {
     this.patchPaneMenu();
@@ -88,7 +90,54 @@ var BorderlessTabPlugin = class extends import_obsidian.Plugin {
     const tabs = this.findAncestor(leafElement != null ? leafElement : leaf.view.containerEl, "workspace-tabs");
     leaf.view.containerEl.classList.toggle(BORDERLESS_CLASS, enabled);
     leafElement == null ? void 0 : leafElement.classList.toggle(BORDERLESS_CLASS, enabled);
-    tabs == null ? void 0 : tabs.classList.toggle(BORDERLESS_CLASS, enabled);
+    if (tabs) {
+      tabs.classList.toggle(BORDERLESS_CLASS, enabled);
+      this.ensureRevealZone(tabs);
+      if (!enabled) this.setHeadersRevealed(tabs, false);
+    }
+  }
+  ensureRevealZone(tabs) {
+    if (this.revealZones.has(tabs)) return;
+    this.revealZones.add(tabs);
+    const revealZone = document.createElement("div");
+    revealZone.className = "borderless-tab-reveal-zone";
+    tabs.appendChild(revealZone);
+    this.registerDomEvent(revealZone, "mouseenter", () => {
+      this.setHeadersRevealed(tabs, true);
+    });
+    this.registerDomEvent(revealZone, "mouseleave", () => {
+      const timer = window.setTimeout(() => {
+        this.revealTimers.delete(tabs);
+        this.setHeadersRevealed(tabs, false);
+      }, 1e3);
+      this.revealTimers.set(tabs, timer);
+    });
+    this.registerDomEvent(tabs, "mousemove", (event) => {
+      if (!tabs.classList.contains(BORDERLESS_CLASS)) return;
+      const rect = tabs.getBoundingClientRect();
+      const pointerIsAtTop = event.clientY - rect.top <= 18;
+      const target = event.target;
+      const pointerIsOverHeader = target !== null && target.closest(
+        ".workspace-tab-header-container, .view-header"
+      ) !== null;
+      if (pointerIsAtTop || pointerIsOverHeader) {
+        this.setHeadersRevealed(tabs, true);
+      } else if (this.revealTimers.has(tabs) === false) {
+        const timer = window.setTimeout(() => {
+          this.revealTimers.delete(tabs);
+          this.setHeadersRevealed(tabs, false);
+        }, 600);
+        this.revealTimers.set(tabs, timer);
+      }
+    });
+  }
+  setHeadersRevealed(tabs, revealed) {
+    const timer = this.revealTimers.get(tabs);
+    if (timer !== void 0) {
+      window.clearTimeout(timer);
+      this.revealTimers.delete(tabs);
+    }
+    tabs.classList.toggle("borderless-tab-revealed", revealed);
   }
   findAncestor(element, className) {
     let current = element;

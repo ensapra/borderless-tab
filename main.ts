@@ -4,6 +4,8 @@ const BORDERLESS_CLASS = "borderless-tab-enabled";
 
 export default class BorderlessTabPlugin extends Plugin {
 	private readonly borderlessLeaves = new WeakSet<WorkspaceLeaf>();
+	private readonly revealZones = new WeakSet<HTMLElement>();
+	private readonly revealTimers = new WeakMap<HTMLElement, number>();
 
 	onload(): void {
 		this.patchPaneMenu();
@@ -79,7 +81,60 @@ export default class BorderlessTabPlugin extends Plugin {
 
 		leaf.view.containerEl.classList.toggle(BORDERLESS_CLASS, enabled);
 		leafElement?.classList.toggle(BORDERLESS_CLASS, enabled);
-		tabs?.classList.toggle(BORDERLESS_CLASS, enabled);
+		if (tabs) {
+			tabs.classList.toggle(BORDERLESS_CLASS, enabled);
+			this.ensureRevealZone(tabs);
+			if (!enabled) this.setHeadersRevealed(tabs, false);
+		}
+	}
+
+	private ensureRevealZone(tabs: HTMLElement): void {
+		if (this.revealZones.has(tabs)) return;
+		this.revealZones.add(tabs);
+		const revealZone = document.createElement("div");
+		revealZone.className = "borderless-tab-reveal-zone";
+		tabs.appendChild(revealZone);
+
+		this.registerDomEvent(revealZone, "mouseenter", () => {
+			this.setHeadersRevealed(tabs, true);
+		});
+		this.registerDomEvent(revealZone, "mouseleave", () => {
+			const timer = window.setTimeout(() => {
+				this.revealTimers.delete(tabs);
+				this.setHeadersRevealed(tabs, false);
+			}, 1000);
+			this.revealTimers.set(tabs, timer);
+		});
+
+		this.registerDomEvent(tabs, "mousemove", (event) => {
+			if (!tabs.classList.contains(BORDERLESS_CLASS)) return;
+
+			const rect = tabs.getBoundingClientRect();
+			const pointerIsAtTop = event.clientY - rect.top <= 18;
+			const target = event.target as Element | null;
+			const pointerIsOverHeader = target !== null && target.closest(
+				".workspace-tab-header-container, .view-header"
+			) !== null;
+
+			if (pointerIsAtTop || pointerIsOverHeader) {
+				this.setHeadersRevealed(tabs, true);
+			} else if (this.revealTimers.has(tabs) === false) {
+				const timer = window.setTimeout(() => {
+					this.revealTimers.delete(tabs);
+					this.setHeadersRevealed(tabs, false);
+				}, 600);
+				this.revealTimers.set(tabs, timer);
+			}
+		});
+	}
+
+	private setHeadersRevealed(tabs: HTMLElement, revealed: boolean): void {
+		const timer = this.revealTimers.get(tabs);
+		if (timer !== undefined) {
+			window.clearTimeout(timer);
+			this.revealTimers.delete(tabs);
+		}
+		tabs.classList.toggle("borderless-tab-revealed", revealed);
 	}
 
 	private findAncestor(element: HTMLElement, className: string): HTMLElement | null {
