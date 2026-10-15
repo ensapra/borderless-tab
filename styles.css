@@ -11,15 +11,26 @@
 	outline: none !important;
 }
 
-/* Remove the tab strip and the view header while keeping the document toolbar. */
+/* Collapse the tab strip and view header while keeping the document toolbar. */
 .workspace-tabs.borderless-tab-enabled .workspace-tab-header-container,
 .borderless-tab-enabled .view-header {
-	display: none !important;
+	display: flex !important;
+	height: auto !important;
+	max-height: 0 !important;
+	min-height: 0 !important;
+	opacity: 0;
+	overflow: hidden !important;
+	pointer-events: none;
+	transform: translateY(-12px);
+	transition: max-height 180ms ease, opacity 140ms ease, transform 180ms ease;
 }
 
 .workspace-tabs.borderless-tab-enabled.borderless-tab-revealed .workspace-tab-header-container,
 .workspace-tabs.borderless-tab-enabled.borderless-tab-revealed .view-header {
-	display: flex !important;
+	max-height: 96px !important;
+	opacity: 1;
+	pointer-events: auto;
+	transform: translateY(0);
 }
 
 .workspace-tabs.borderless-tab-enabled {
@@ -41,15 +52,16 @@
 	display: none;
 }
 
-/* Fallback for workspace layouts where the leaf and tab header use separate wrappers. */
-.workspace-tabs:has(.borderless-tab-enabled) .workspace-tab-header-container,
-.workspace-tabs:has(.borderless-tab-enabled) .view-header {
-	display: none !important;
-}
-
 .workspace-tabs.borderless-tab-enabled .workspace-tab-container,
 .workspace-tabs.borderless-tab-enabled .workspace-leaf,
 .workspace-tabs.borderless-tab-enabled .workspace-leaf-content {
 	border: none !important;
 	box-shadow: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.workspace-tabs.borderless-tab-enabled .workspace-tab-header-container,
+	.borderless-tab-enabled .view-header {
+		transition: none;
+	}
 }
