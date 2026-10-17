@@ -17,7 +17,7 @@
   
   <!-- Obsidian link -->
   <a href="https://community.obsidian.md/account/plugins/borderless-tab">
-    <img src="https://img.shields.io/badge/Obsidian-Plugin-8f40dd?style=for-the-badge&logo=obsidian&logoColor=white" alt="Support Ensapra on Patreon" />
+    <img src="https://img.shields.io/badge/Obsidian-Plugin-8f40dd?style=for-the-badge&logo=obsidian&logoColor=white" alt="Obsidian plugin link" />
   </a>
 </div>
 
